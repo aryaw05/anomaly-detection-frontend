@@ -1,22 +1,38 @@
 "use client";
 
-import { get } from "@/app/api/infrastructure/infrastructure-api";
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
 
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
+import InfrastructureDetailPanel from "@/components/InfrastructureDetailPanel";
+import { InfrastructureDetail } from "@/types/infrastructure";
 const Map = dynamic(() => import("../../(map)/page"), { ssr: false });
 
 export default function Technician() {
-  useEffect(() => {
-    const data = async () => {
-      const response = await get();
-      console.log(response);
-    };
-    data();
-  }, []);
+  const [selectedInfrastructure, setSelectedInfrastructure] = useState(null);
+  const isMobile = useIsMobile();
+  const handleCloseDetail = () => {
+    setSelectedInfrastructure(null);
+  };
+
+  function handleInfrastructureSelect(infrastructure: InfrastructureDetail) {
+    setSelectedInfrastructure(infrastructure);
+  }
   return (
-    <div>
-      <Map />
+    <div className="flex w-full h-full">
+      {/* manambahkan onclick pada marker anomaly  */}
+      <Map selectedInfrastructure={handleInfrastructureSelect} />
+      {!isMobile && selectedInfrastructure && (
+        <div className="border-l bg-card/50 backdrop-blur-sm">
+          <InfrastructureDetailPanel
+            // mengambil infromasi infrastruktur
+            infrastructureDetail={selectedInfrastructure}
+            onClose={handleCloseDetail}
+            isOpen={true}
+            // onStatusUpdate={handleStatusUpdate}
+          />
+        </div>
+      )}
     </div>
   );
 }

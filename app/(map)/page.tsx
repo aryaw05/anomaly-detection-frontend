@@ -1,22 +1,45 @@
 "use client";
+import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
+import { get } from "../api/infrastructure/infrastructure-api";
+import icon from "leaflet/dist/images/marker-icon.png";
+import { InfrastructureDetail } from "@/types/infrastructure";
 
-export default function MapProvider() {
+interface MapProviderProps {
+  selectedInfrastructure?: (infrastructure: InfrastructureDetail) => void;
+}
+export default function MapProvider({
+  selectedInfrastructure,
+}: MapProviderProps) {
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
+  const [data, setData] = useState([]);
+  let DefaultIcon = L.icon({
+    iconUrl: icon,
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    iconSize: [25, 41],
+  });
+  L.Marker.prototype.options.icon = DefaultIcon;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const response = await get();
+      setData(response);
+      console.log("infrastructure data", response);
+    };
+    fetchData();
+  }, []);
+
   useEffect(() => {
     if (mapRef.current !== null) {
       (mapRef.current as L.Map).remove();
     }
     // Bounds
     const tileLayer = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-    const southWest = L.latLng(-7.899, 105.958);
-    const northEast = L.latLng(-6.3631, 111.757);
-    const bounds = L.latLngBounds(southWest, northEast);
     const map = L.map(mapContainerRef.current || "", {
-      // maxBounds: bounds,
       center: [-7.319, 109.572],
       zoom: 10,
       minZoom: 8,
@@ -28,6 +51,22 @@ export default function MapProvider() {
 
     mapRef.current = map;
   }, []);
+
+  useEffect(() => {
+    if (!data) return;
+    if (!data.data?.infrastructure) return;
+    data &&
+      data.data.infrastructure.map((item: InfrastructureDetail) => {
+        L.marker([item.latitude, item.longitude])
+          .addTo(mapRef.current)
+          .on("click", () => {
+            if (selectedInfrastructure) {
+              selectedInfrastructure(item);
+            }
+          });
+      });
+  }, [data]);
+
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainerRef} className="w-full  h-screen z-1 " />
