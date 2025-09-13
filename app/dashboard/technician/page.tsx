@@ -19,11 +19,10 @@ export default function Technician() {
     setSelectedInfrastructure(infrastructure);
   }
   return (
-    <div className="flex w-full h-full">
-      {/* manambahkan onclick pada marker anomaly  */}
+    <div className="flex w-full  h-full">
       <Map selectedInfrastructure={handleInfrastructureSelect} />
       {!isMobile && selectedInfrastructure && (
-        <div className="border-l bg-card/50 backdrop-blur-sm">
+        <div className="border-l bg-card/50 backdrop-blur-sm ">
           <InfrastructureDetailPanel
             // mengambil infromasi infrastruktur
             infrastructureDetail={selectedInfrastructure}
@@ -32,6 +31,14 @@ export default function Technician() {
             // onStatusUpdate={handleStatusUpdate}
           />
         </div>
+      )}
+
+      {isMobile && selectedInfrastructure && (
+        <InfrastructureDetailPanel
+          infrastructureDetail={selectedInfrastructure}
+          onClose={handleCloseDetail}
+          isOpen={true}
+        />
       )}
     </div>
   );
