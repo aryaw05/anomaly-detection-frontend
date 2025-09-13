@@ -10,12 +10,18 @@ import { InfrastructureDetail } from "@/types/infrastructure";
 interface MapProviderProps {
   selectedInfrastructure?: (infrastructure: InfrastructureDetail) => void;
 }
+
+interface ApiResponse {
+  data: {
+    infrastructure: InfrastructureDetail[];
+  };
+}
 export default function MapProvider({
   selectedInfrastructure,
 }: MapProviderProps) {
-  const mapRef = useRef(null);
-  const mapContainerRef = useRef(null);
-  const [data, setData] = useState([]);
+  const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const [data, setData] = useState<ApiResponse | null>([]);
   let DefaultIcon = L.icon({
     iconUrl: icon,
     iconAnchor: [12, 41],
@@ -53,33 +59,31 @@ export default function MapProvider({
   }, []);
 
   useEffect(() => {
-    if (!data) return;
-    if (!data.data?.infrastructure) return;
-    data &&
-      data.data.infrastructure.map((item: InfrastructureDetail) => {
-        L.marker([item.latitude, item.longitude])
-          .addTo(mapRef.current)
-          .on("click", () => {
-            if (selectedInfrastructure) {
-              selectedInfrastructure(item);
-            }
-          });
-      });
-  }, [data]);
+    if (!data?.data?.infrastructure) return;
+
+    data.data.infrastructure.forEach((item: InfrastructureDetail) => {
+      L.marker([item.latitude, item.longitude])
+        .addTo(mapRef.current as L.Map)
+        .on("click", () => {
+          selectedInfrastructure?.(item);
+        });
+    });
+  }, [data, selectedInfrastructure]);
 
   return (
     <div className="relative w-full h-full">
-      <div ref={mapContainerRef} className="w-full  h-screen z-1 " />
+      <div ref={mapContainerRef} className="w-full h-full z-1 " />
 
+      {/* Status Legend */}
       <div className="absolute top-3 left-20 bg-card/95 backdrop-blur-sm rounded-lg p-3 shadow-medium border z-10">
         <h4 className="text-sm font-semibold mb-2">Status Legend</h4>
         <div className="space-y-2 text-xs">
           <div className="flex items-center gap-2">
-            <div className="rounded-full w-2 h-2 bg-blue-500"></div>
+            <div className="rounded-full w-2 h-2 bg-red-500"></div>
             <span>Open</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="rounded-full w-2 h-2 bg-orange-500"></div>
+            <div className="rounded-full w-2 h-2 bg-yellow-500"></div>
             <span>On Progress</span>
           </div>
           <div className="flex items-center gap-2">
